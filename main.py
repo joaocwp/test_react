@@ -1,5 +1,6 @@
 
 from fastapi import UploadFile, File, HTTPException, FastAPI
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import List, Literal
@@ -7,11 +8,15 @@ import pandas as pd
 import numpy as np
 from io import StringIO
 import logging
+from glob import glob
+from pathlib import Path
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
+DATA_DIR = Path("src/data")
+DATA_DIR.mkdir(exist_ok=True, parents=True)
 
 # Allow requests from React (important!)
 app.add_middleware(
@@ -25,6 +30,38 @@ app.add_middleware(
 class SumRequest(BaseModel):
     a: float
     b: float
+
+@app.get("/files")
+def list_files():
+    return {"files": glob(str(DATA_DIR / "*.csv"))}
+
+@app.post("/files")
+def upload_file(file: UploadFile = File(...)):
+    if not file.filename.endswith(".csv"):
+        raise HTTPException(status_code=400, detail="Only CSV files are allowed")
+
+    file_location = DATA_DIR / file.filename
+    with open(file_location, "wb") as f:
+        f.write(file.file.read())
+
+    return {"filename": file.filename, "message": "File uploaded successfully", "status": "uploaded"}
+
+@app.delete("/files/{filename}")
+def delete_file(filename: str):
+    file_path = DATA_DIR / filename
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+
+    file_path.unlink()
+    return {"filename": filename, "message": "File deleted successfully", "status": "deleted"}
+
+@app.get("/files/{filename}")
+def download_file(filename: str):
+    file_path = DATA_DIR / filename
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+
+    return FileResponse(path=file_path, filename=filename, media_type="text/csv")
 
 @app.post("/sum")
 def sum_numbers(data: SumRequest):

@@ -1,0 +1,107 @@
+from fastapi import FastAPI, UploadFile, File, HTTPException 
+from pydantic import BaseModel
+import tempfile
+import numpy as np
+import csv
+from glob import glob
+from pathlib import Path
+
+app = FastAPI()
+
+DATA_DIR = Path("src/data")
+DATA_DIR.mkdir(exist_ok=True, parents=True)
+
+class item(BaseModel):
+    name: str
+    description: str
+
+@app.get("/files")
+def list_files():
+    return {"files": glob(str(DATA_DIR / "*.csv"))}
+
+@app.get("/ping")
+def ping():
+    return {"status": "ok"}
+@app.post("/items")
+def create_item(item: item):
+    return {"item_name": item.name, "item_description": item.description}
+
+@app.get("/sum")
+def sum_app(a: float, b:float):
+    return {"result": a + b}
+
+@app.post("/mean")
+def mean(numbers: str):
+    try:
+        num_list = [float(x) for x in numbers.split(",")]
+        print(num_list)
+        if len(num_list) == 0:
+            raise ValueError("No numbers provided")
+        mean_value = sum(num_list) / len(num_list)
+        return {"mean": mean_value}
+    except ValueError as e:
+        return {"error": str(e)}
+    
+
+def read_csv_column(file_path: str, column_index: int = 0) -> np.ndarray:
+    values = []
+
+    with open(file_path, newline="") as f:
+        reader = csv.reader(f)
+        for row in reader:
+            if not row:
+                continue
+            try:
+                values.append(float(row[column_index]))
+            except ValueError:
+                continue
+
+    if not values:
+        raise ValueError("No valid numeric data found")
+
+    return np.array(values)
+
+def bootstrap_mean(data: np.ndarray, n_bootstrap: int = 10_000):
+    n = len(data)
+    bootstrap_means = []
+
+    for _ in range(n_bootstrap):
+        resample = np.random.choice(data, size=n, replace=True)
+        bootstrap_means.append(np.mean(resample))
+
+    bootstrap_means = np.array(bootstrap_means)
+    ci_lower = np.percentile(bootstrap_means, 2.5)
+    ci_upper = np.percentile(bootstrap_means, 97.5)
+
+    return bootstrap_means, ci_lower, ci_upper
+
+
+@app.post("/bootstrap")
+async def bootstrap_from_file(
+    file: UploadFile = File(...),
+    n_bootstrap: int = 10_000,
+    n_sample: int = 10
+):  
+    if not file.filename.endswith(".csv"):
+        raise HTTPException(status_code=400, detail="Only CSV files allowed")
+
+    # Save uploaded file to a temp location (streaming)
+    with tempfile.NamedTemporaryFile(delete=False) as tmp:
+        while chunk := await file.read(1024 * 1024):  # 1 MB chunks
+            tmp.write(chunk)
+        tmp_path = tmp.name
+
+    try:
+        data = read_csv_column(tmp_path)
+        means, ci_lower, ci_upper = bootstrap_mean(data, n_bootstrap)
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    return {
+        "bootstrap_distribution": means.tolist()[:min(n_sample, len(means))],
+        "ci_95": {
+            "lower": ci_lower,
+            "upper": ci_upper
+        }
+    }

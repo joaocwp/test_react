@@ -31,6 +31,34 @@ body {
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
 }
 
+.vetical-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.number-input {
+  width: 30%;
+  max-width:80%;
+}
+
+@media (max-width: 900px) {
+  .cards-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cards-grid{
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  justify-items: center;
+}
+
+.cards-grid > :last-child:nth-child(3n + 1) {
+  grid-column: 2;
+}
+
 /* Navigation */
 nav {
   display: flex;
@@ -56,7 +84,7 @@ h1 {
 
 /* Buttons */
 button {
-  background: #2563eb; /* blue-600 */
+  background: #0a07d4; /* blue-600 */
   color: white;
   border: none;
   border-radius: 8px;
@@ -88,4 +116,59 @@ input[type="file"] {
 
 form button {
   margin-top: 8px;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: 1fr;
+  row-gap: 12px;
+}
+
+.control-2btn {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+button.danger {
+  background-color: #dd6824;
+  color: white;
+}
+
+button.danger:hover {
+  background: #e00808;
+}
+
+.file-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.file-list button{
+  width: 50%;
+}
+
+.file-card {
+  gap: 12px;
+  border: 1px solid #252661fd;
+  border-radius: 8px;
+  padding: 12px;              /* space around the card */
+  background-color: #252661fd;
+  list-style-position: inside;
+}
+
+.file-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #bbb3b3;
+}
+
+.file-card li::marker {
+  color: #000000;
+}
+
+.file-select{
+  margin-bottom: 12px;
 }
