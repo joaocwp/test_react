@@ -6,7 +6,7 @@ import FileManager from "./pages/FileManager";
 
 export default function App() {
   return (
-    <div>
+    <div className="App">
       <nav>
         <Link to="/">Counter</Link>
         <Link to="/hello">Hello</Link>

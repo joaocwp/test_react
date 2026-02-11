@@ -4,7 +4,6 @@ const API = "http://localhost:8000";
 
 export default function FileManager() {
     const [files, setFiles] = useState([]);
-    // const [file, setFile] = useState(null);
     const [selectedFile, setSelectedFile] = useState("");
     
     const fetchFiles = async () => {
@@ -12,30 +11,6 @@ export default function FileManager() {
         const data = await res.json();
         setFiles(data.files);
     };
-
-    // const uploadfile = async () => {
-    //     if (!file) return;
-
-    //     const formData = new FormData();
-    //     formData.append("file", file);
-
-    //     try {
-    //         const response = await fetch(`${API}/files`, {
-    //             method: "POST",
-    //             body: formData,
-    //         });
-
-    //         if (!response.ok) {
-    //             throw new Error(`Request failed: ${response.status}`);
-    //         }
-
-    //         alert("File uploaded successfully!");
-    //         fetchFiles(); // Refresh the file list after upload
-    //     } catch (error) {
-    //         console.error("Error uploading file:", error);
-    //         alert("Failed to upload file.");
-    //     }
-    // }
 
     const deleteFileFunc = async () => {
         if (!selectedFile) return;
@@ -161,6 +136,7 @@ export default function FileManager() {
     }
 
     return (
+    <>  
         <div className="card">
             <h2>File Manager</h2>
              <div className="controls">
@@ -169,5 +145,12 @@ export default function FileManager() {
                 <ManageFiles />
             </div>
         </div>
+        <div className="card">
+            <h2>File Manager</h2>
+             <div className="controls">
+                <UploadFiles />
+            </div>
+        </div>
+    </>
     )
 }
